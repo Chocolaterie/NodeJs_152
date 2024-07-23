@@ -34,6 +34,8 @@ app.post('/save-article', (request, response) => {
     // Récupérer l'article envoyé en json
     const articleJSON = request.body;
 
+    // TODO : Controle de surface (valider les données)
+
     let foundArticle = null;
     // Est-ce on a un id envoyer dans le json
     if (articleJSON.id != undefined || articleJSON.id) {
@@ -70,9 +72,9 @@ app.delete('/article/:id', (request, response) => {
     }
 
     // supprimer grace à l'index
-    DB_Articles.slice(foundArticleIndex, 1);
+    DB_Articles.splice(foundArticleIndex, 1);
 
-    return response.json(`Supprimera un article id ${id}`);
+    return response.json(`Article supprimé ${id}`);
 });
 
 // Démarrer le serveur
