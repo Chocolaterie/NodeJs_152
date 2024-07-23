@@ -36,13 +36,13 @@ app.post('/save-article', (request, response) => {
 
     let foundArticle = null;
     // Est-ce on a un id envoyer dans le json
-    if (articleJSON.id != undefined || articleJSON.id){
+    if (articleJSON.id != undefined || articleJSON.id) {
         // essayer de trouver un article existant
         foundArticle = DB_Articles.find(article => article.id === articleJSON.id);
     }
-    
-    // Si je trouve je modifie les nouvelles
-    if (foundArticle){
+
+    // Si je trouve je modifie les nouvelles valeurs
+    if (foundArticle) {
         foundArticle.title = articleJSON.title;
         foundArticle.content = articleJSON.content;
         foundArticle.author = articleJSON.author;
@@ -62,7 +62,12 @@ app.delete('/article/:id', (request, response) => {
     const id = parseInt(request.params.id);
 
     // trouver l'index
-     const foundArticleIndex = DB_Articles.findIndex(article => article.id === id);
+    const foundArticleIndex = DB_Articles.findIndex(article => article.id === id);
+
+    // si article trouve erreur
+    if (foundArticleIndex < 0) {
+        return response.json(`Impossible de supprimer un article inexistant`);
+    }
 
     // supprimer grace à l'index
     DB_Articles.slice(foundArticleIndex, 1);
