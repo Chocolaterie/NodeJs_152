@@ -77,7 +77,7 @@ function authMiddleware(request, response, next){
 
 app.get('/todo', async (request, response) => {
     // Retourner la réponse json
-    return performResponseService(response, '202', 'Coucou', token);
+    return performResponseService(response, '202', 'Coucou', null);
 });
 
 // Routes
