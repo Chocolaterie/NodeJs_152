@@ -1,5 +1,9 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+
+// clé secrete jwt
+const JWT_SECRET = "chocolatine";
 
 const app = express();
 // Autoriser express à recevoir des donnée envoyer en JSOn dans le body (Le fameux Payload)
@@ -27,6 +31,7 @@ mongoose.connect("mongodb://localhost:27017/db_article");
 // 2 : Les attributs attendus pour ce Model
 // 3 : Le nom de la collection en base liée (synonyme du nom de la table en sql)
 const Article = mongoose.model('Article', { uid: String, title : String, content : String, author: String }, 'articles');
+const User = mongoose.model('User', { email: String, password : String }, 'users');
 
 // ================ BDD ============== //
 
@@ -42,7 +47,54 @@ function performResponseService(response, code, message, data) {
     return response.json({code : code, message : message, data : data});
 }
 
+// Middleware
+function authMiddleware(request, response, next){
+    // Si token null alors erreur
+    if (request.headers.authorization == undefined || !request.headers.authorization) {
+        return response.json({ message: "Token null" });
+    }
+
+    // Extraire le token (qui est bearer)
+    const token = request.headers.authorization.substring(7);
+
+    // par defaut le result est null
+    let result = null;
+    
+    // Si reussi à générer le token sans crash
+    try {
+        result = jwt.verify(token, JWT_SECRET);
+    } catch {
+    }
+
+    // Si result null donc token incorrect
+    if (!result) {
+        return response.json({ message: "token pas bon" });
+    }
+
+    // On passe le middleware
+    return next();
+}
+
 // Routes
+app.post('/login', async (request, response) => {
+
+    // Tester le couple email / mot de passe
+    const loggedUser = await User.findOne({ email : request.body.email, password : request.body.password });
+
+    // Si pas bon
+    if (!loggedUser){
+        return performResponseService(response, '701', 'Couple email et mot de passe incorrect', null);
+    }
+
+    // Se connecter (générer un token)
+    const token = jwt.sign({
+        email: loggedUser.email,
+    }, JWT_SECRET, { expiresIn: '3 hours' })
+
+    // Retourner la réponse json
+    return performResponseService(response, '202', 'Connecté(e) avec succès', token);
+});
+
 app.get('/articles', async (request, response) => {
 
     // Select all d'article
@@ -52,7 +104,6 @@ app.get('/articles', async (request, response) => {
 });
 
 app.get('/article/:id', async (request, response) => {
-
     // Il faut l'id
     const id = request.params.id;
 
@@ -68,7 +119,12 @@ app.get('/article/:id', async (request, response) => {
     return performResponseService(response, '200', `Article récupéré avec succès`, foundArticle);
 });
 
-app.post('/save-article', async (request, response) => {
+/**
+ * 1 : url
+ * 2 : middlewares
+ * 3 : le code de la route
+ */
+app.post('/save-article', authMiddleware, async (request, response) => {
 
     // Récupérer l'article envoyé en json
     const articleJSON = request.body;
@@ -127,7 +183,7 @@ app.post('/save-article', async (request, response) => {
     return performResponseService(response, '200', `Article ajouté avec succès`, createdArticle);
 });
 
-app.delete('/article/:id', async (request, response) => {
+app.delete('/article/:id', authMiddleware, async (request, response) => {
 
     // Il faut l'id en entier
     const id = request.params.id;
