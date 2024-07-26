@@ -24,7 +24,7 @@ mongoose.connection.on('error', (err) => {
 });
 
 // Se connecter à mongo db
-mongoose.connect("mongodb://localhost:27017/db_article");
+// mongoose.connect("mongodb://localhost:27017/db_article");
 
 // Déclarer le modele Person
 // 1 : Nom pour les relations dans le code JS (on utilise pas pour le moment)
@@ -74,6 +74,11 @@ function authMiddleware(request, response, next){
     // On passe le middleware
     return next();
 }
+
+app.get('/todo', async (request, response) => {
+    // Retourner la réponse json
+    return performResponseService(response, '202', 'Coucou', token);
+});
 
 // Routes
 app.post('/login', async (request, response) => {
